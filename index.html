@@ -10,6 +10,9 @@
 <meta name="apple-mobile-web-app-title" content="Helix Drop">
 <meta name="description" content="A fun helix ball game with 50 levels!">
 <link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="android-chrome-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="android-chrome-512x512.png">
+<link rel="apple-touch-icon" href="android-chrome-192x192.png">
 <title>Helix Drop</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&display=swap');
@@ -275,19 +278,12 @@ let{bestScore,bestLevel}=loadSaved();
 // ── 50 Level Configs ──────────────────────────────
 function getLevelCfg(lv){
   lv=Math.max(1,Math.min(50,lv));
-  // Zone 1: EASY (1-2) — no solid, huge gap
   if(lv<=2)return{gravity:.055,maxFall:2.0,hSpeed:2.0,solidChance:0,gapSize:4,breakChance:.98,rotSpeed:.001,label:'⭐ EASY',labelCol:'#4ade80',bg1:'#050018',bg2:'#0e0030',brk:'#a855f7',brkGlow:'#c084fc',brkDark:'#6d28d9',pole:'#7c3aed'};
-  // Zone 2: EASY (3-5) — tiny solid
   if(lv<=5){const t=(lv-3)/2;return{gravity:.065+t*.01,maxFall:2.2+t*.2,hSpeed:2.0+t*.1,solidChance:.05+t*.03,gapSize:4,breakChance:.9,rotSpeed:.0012+t*.0002,label:'⭐ EASY',labelCol:'#4ade80',bg1:'#050018',bg2:'#0e0030',brk:'#a855f7',brkGlow:'#c084fc',brkDark:'#6d28d9',pole:'#7c3aed'};}
-  // Zone 3: EASY+ (6-10)
   if(lv<=10){const t=(lv-6)/4;return{gravity:.075+t*.015,maxFall:2.4+t*.35,hSpeed:2.1+t*.15,solidChance:.08+t*.04,gapSize:3,breakChance:.80,rotSpeed:.0014+t*.0004,label:'⭐⭐ EASY+',labelCol:'#86efac',bg1:'#05001a',bg2:'#100035',brk:'#818cf8',brkGlow:'#a5b4fc',brkDark:'#4338ca',pole:'#6366f1'};}
-  // Zone 4: MEDIUM (11-20)
   if(lv<=20){const t=(lv-11)/9;return{gravity:.095+t*.035,maxFall:3.0+t*.9,hSpeed:2.3+t*.35,solidChance:.13+t*.11,gapSize:3,breakChance:.68,rotSpeed:.002+t*.001,label:'⭐⭐⭐ MEDIUM',labelCol:'#fbbf24',bg1:'#0a0800',bg2:'#1a1000',brk:'#f59e0b',brkGlow:'#fbbf24',brkDark:'#b45309',pole:'#d97706'};}
-  // Zone 5: HARD (21-30)
   if(lv<=30){const t=(lv-21)/9;return{gravity:.13+t*.05,maxFall:3.9+t*1.1,hSpeed:2.65+t*.45,solidChance:.24+t*.10,gapSize:3,breakChance:.57,rotSpeed:.003+t*.001,label:'🔥 HARD',labelCol:'#fb923c',bg1:'#0f0500',bg2:'#1e0a00',brk:'#f97316',brkGlow:'#fb923c',brkDark:'#c2410c',pole:'#ea580c'};}
-  // Zone 6: HARD+ (31-40)
   if(lv<=40){const t=(lv-31)/9;return{gravity:.18+t*.05,maxFall:5.0+t*1.2,hSpeed:3.1+t*.45,solidChance:.34+t*.08,gapSize:2,breakChance:.50,rotSpeed:.004+t*.0015,label:'💀 HARD+',labelCol:'#f87171',bg1:'#0f0000',bg2:'#1e0000',brk:'#ef4444',brkGlow:'#f87171',brkDark:'#b91c1c',pole:'#dc2626'};}
-  // Zone 7: EXTREME (41-50)
   const t=(lv-41)/9;
   return{gravity:.23+t*.05,maxFall:6.2+t*1.3,hSpeed:3.55+t*.35,solidChance:.42+t*.07,gapSize:2,breakChance:.44,rotSpeed:.0055+t*.0018,label:'☠️ EXTREME',labelCol:'#e879f9',bg1:'#0a0015',bg2:'#160025',brk:'#d946ef',brkGlow:'#e879f9',brkDark:'#a21caf',pole:'#c026d3'};
 }
@@ -433,11 +429,9 @@ function update(){
   if(state!=='playing')return;
   frameN++;ballHue=(ballHue+1.2)%360;
 
-  // Freeze safety
   if(Math.abs(ballVY)<0.05)frozenFrames++;else frozenFrames=0;
   if(frozenFrames>150){ballVY=cfg.gravity*5;frozenFrames=0;}
 
-  // Physics
   ballVY=Math.min(ballVY+cfg.gravity,cfg.maxFall);
   ballY+=ballVY;ballX+=ballVX;ballVX*=0.74;
   ballX=Math.max(CX-RX+BALL_R,Math.min(CX+RX-BALL_R,ballX));
@@ -445,7 +439,6 @@ function update(){
 
   const ballSeg=getBallSeg();
 
-  // Nearest ring for aim arrow
   nearestRingY=BALL_SY+120;
   const sorted=[...rings].sort((a,b)=>a.worldY-b.worldY);
   for(const r of sorted){
@@ -453,7 +446,6 @@ function update(){
     if(sy>BALL_SY+BALL_R+2&&sy<BALL_SY+200){nearestRingY=sy;break;}
   }
 
-  // Collision check
   for(const ring of sorted){
     const sy=worldToSY(ring.worldY);
     if(ballVY<=0)continue;
@@ -479,7 +471,6 @@ function update(){
       }
       break;
     }else{
-      // SOLID HIT — death
       doShake(2.5);
       burst(ballX,BALL_SY,'#ef4444',24,6);
       burst(ballX,BALL_SY,'#fff',6,3);
@@ -491,16 +482,13 @@ function update(){
 
   extendRings();
 
-  // Break anim
   for(const r of rings)for(const s of r.segs)
     if(!s.alive&&s.breakAnim>0)s.breakAnim=Math.max(0,s.breakAnim-.07);
 
-  // Fell too far safety
   if(ballY>nextIdx*RING_SP+600){
     state='dead';playSound('death');setTimeout(showGO,400);return;
   }
 
-  // Particles
   for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.vy+=.13;p.life-=p.decay;p.r*=.97;}
   particles=particles.filter(p=>p.life>0);
   for(const f of floatTexts){f.y+=f.vy;f.life-=.027;}
@@ -552,13 +540,11 @@ function drawBG(){
   const bg=ctx.createRadialGradient(CX,280,40,CX,380,420);
   bg.addColorStop(0,cfg.bg2);bg.addColorStop(1,cfg.bg1);
   ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
-  // Stars
   ctx.fillStyle='rgba(255,255,255,0.5)';
   for(let i=0;i<55;i++){
     const sx=(i*173+15)%W,sy=(i*127+7)%H;
     ctx.beginPath();ctx.arc(sx,sy,.3+(i%5)*.15,0,Math.PI*2);ctx.fill();
   }
-  // Vignette
   const vg=ctx.createRadialGradient(CX,H/2,100,CX,H/2,W*.88);
   vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,0.6)');
   ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
@@ -600,10 +586,8 @@ function drawOneRing(ring){
     const x2i=CX+Math.cos(a2)*(RX*.36),y2i=sy+Math.sin(a2)*(RY*.36);
     ctx.save();ctx.globalAlpha=al;
     if(seg.type==='solid'){
-      // Side
       ctx.fillStyle=hexA('#1e293b',.92);
       ctx.beginPath();ctx.moveTo(x1o,y1o);ctx.lineTo(x2o,y2o);ctx.lineTo(x2o,y2o+sH);ctx.lineTo(x1o,y1o+sH);ctx.closePath();ctx.fill();
-      // Top
       const sg=ctx.createLinearGradient(x1o,y1o,x1i,y1i);
       sg.addColorStop(0,`hsl(210,14%,${26+lt*26}%)`);sg.addColorStop(1,`hsl(210,10%,${16+lt*16}%)`);
       ctx.fillStyle=sg;
@@ -613,10 +597,8 @@ function drawOneRing(ring){
       ctx.globalAlpha=al*.16*lt;ctx.strokeStyle='#fff';ctx.lineWidth=1.5;
       ctx.beginPath();ctx.moveTo(x1o*.97+x1i*.03,y1o*.97+y1i*.03);ctx.lineTo(x2o*.97+x2i*.03,y2o*.97+y2i*.03);ctx.stroke();
     }else{
-      // Side
       ctx.fillStyle=hexA(cfg.brkDark,.88);
       ctx.beginPath();ctx.moveTo(x1o,y1o);ctx.lineTo(x2o,y2o);ctx.lineTo(x2o,y2o+sH);ctx.lineTo(x1o,y1o+sH);ctx.closePath();ctx.fill();
-      // Top
       const tg=ctx.createLinearGradient(x1o,y1o,x1i,y1i);
       tg.addColorStop(0,cfg.brkGlow);tg.addColorStop(.55,cfg.brk);tg.addColorStop(1,cfg.brkDark);
       ctx.fillStyle=tg;ctx.shadowColor=cfg.brkGlow;ctx.shadowBlur=depth>0?10:0;
@@ -625,7 +607,6 @@ function drawOneRing(ring){
       ctx.beginPath();ctx.moveTo(x1o,y1o);ctx.lineTo(x2o,y2o);ctx.stroke();ctx.shadowBlur=0;
       ctx.globalAlpha=al*.36*lt;ctx.strokeStyle='#fff';ctx.lineWidth=1.5;
       ctx.beginPath();ctx.moveTo(x1o*.96+x1i*.04,y1o*.96+y1i*.04);ctx.lineTo(x2o*.96+x2i*.04,y2o*.96+y2i*.04);ctx.stroke();
-      // Break sparkle
       if(!seg.alive&&(seg.breakAnim||0)>0){
         ctx.globalAlpha=seg.breakAnim*.9;
         const mx=(x1o+x2o)/2,my=(y1o+y2o)/2;
@@ -657,10 +638,8 @@ function drawAimArrow(){
 // ── Draw: Ball (Rainbow) ──────────────────────────
 function drawBall(){
   const sx=ballX,sy=BALL_SY;
-  // Shadow
   ctx.save();ctx.fillStyle='rgba(0,0,0,0.25)';
   ctx.beginPath();ctx.ellipse(sx,sy+BALL_R+5,13,4,0,0,Math.PI*2);ctx.fill();ctx.restore();
-  // Trail
   const spd=Math.abs(ballVY),tLen=Math.min(18,Math.floor(spd*1.1));
   for(let i=1;i<=tLen;i++){
     const ty=sy+i*(ballVY*.5),tx=sx-ballVX*i*.18;
@@ -671,11 +650,9 @@ function drawBall(){
     ctx.shadowColor=`hsl(${th},100%,60%)`;ctx.shadowBlur=8;
     ctx.beginPath();ctx.arc(tx,ty,tr,0,Math.PI*2);ctx.fill();ctx.restore();
   }
-  // Halo
   const halo=ctx.createRadialGradient(sx,sy,BALL_R,sx,sy,BALL_R*3.2);
   halo.addColorStop(0,`hsla(${ballHue},100%,70%,0.38)`);halo.addColorStop(1,'rgba(0,0,0,0)');
   ctx.fillStyle=halo;ctx.beginPath();ctx.arc(sx,sy,BALL_R*3.2,0,Math.PI*2);ctx.fill();
-  // Body
   ctx.save();
   ctx.shadowColor=`hsl(${ballHue},100%,65%)`;ctx.shadowBlur=28;
   const bg=ctx.createRadialGradient(sx-4,sy-5,1,sx,sy,BALL_R);
@@ -685,11 +662,9 @@ function drawBall(){
   bg.addColorStop(1,`hsl(${(ballHue+180)%360},100%,32%)`);
   ctx.fillStyle=bg;
   ctx.beginPath();ctx.arc(sx,sy,BALL_R,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
-  // Inner ring
   ctx.globalAlpha=.22;
   ctx.strokeStyle=`hsl(${(ballHue+90)%360},100%,85%)`;ctx.lineWidth=2.5;
   ctx.beginPath();ctx.arc(sx-2,sy-2,BALL_R*.54,0,Math.PI*2);ctx.stroke();
-  // Specular
   ctx.globalAlpha=.88;ctx.fillStyle='rgba(255,255,255,0.92)';
   ctx.beginPath();ctx.arc(sx-4,sy-5,4.2,0,Math.PI*2);ctx.fill();
   ctx.globalAlpha=.5;ctx.fillStyle='rgba(255,255,255,0.7)';
@@ -745,6 +720,17 @@ function loop(){
 loop();
 updateHUD();
 updateDiffBadge();
+</script>
+
+<!-- ── Service Worker Registration ── -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(() => console.log('✅ Service Worker registered'))
+        .catch(err => console.warn('SW registration failed:', err));
+    });
+  }
 </script>
 </body>
 </html>
