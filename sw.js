@@ -1,10 +1,12 @@
-const CACHE_NAME = 'helix-drop-v1';
+const CACHE_NAME = 'helix-drop-v2';
 const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/android-chrome-192x192.png',
-  '/android-chrome-512x512.png'
+  '/android-chrome-512x512.png',
+  '/screenshots/desktop.png',
+  '/screenshots/mobile.png'
 ];
 
 self.addEventListener('install', (e) => {
