@@ -11,6 +11,7 @@
   "theme_color": "#a855f7",
   "dir": "ltr",
   "lang": "en",
+  "categories": ["games", "entertainment"],
   "icons": [
     {
       "src": "android-chrome-192x192.png",
