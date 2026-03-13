@@ -271,11 +271,14 @@ function makeRing(worldY){
   }
   return{worldY,segs,gapStart};
 }
-function initRings(){rings=[];nextIdx=0;for(let i=0;i<18;i++){rings.push(makeRing(i*RING_SP));nextIdx++;}}
+function initRings(){rings=[];nextIdx=0;for(let i=0;i<22;i++){rings.push(makeRing(i*RING_SP));nextIdx++;}}
 function extendRings(){
-  const last=rings[rings.length-1];
-  while(last&&worldToSY(last.worldY)<H+RING_SP*4){rings.push(makeRing(nextIdx*RING_SP));nextIdx++;}
-  rings=rings.filter(r=>worldToSY(r.worldY)>-200);
+  // Always keep rings ahead — never let the track end
+  while(!rings.length||worldToSY(rings[rings.length-1].worldY)<H+RING_SP*8){
+    rings.push(makeRing(nextIdx*RING_SP));nextIdx++;
+    if(nextIdx>999999)break;
+  }
+  rings=rings.filter(r=>worldToSY(r.worldY)>-400);
 }
 function worldToSY(wy){return BALL_SY+(wy-ballY);}
 
@@ -380,9 +383,15 @@ function updateDiffBadge(){
 }
 
 // ── Update ────────────────────────────────────────
+let lastFrameTime=0,frozenFrames=0;
+
 function update(){
   if(state!=='playing')return;
   frameN++;ballHue=(ballHue+1.2)%360;
+
+  // ── Freeze detector: agar ball 180 frames tak nahi giri toh auto-resume ──
+  if(Math.abs(ballVY)<0.05)frozenFrames++;else frozenFrames=0;
+  if(frozenFrames>180){ballVY=cfg.gravity*4;frozenFrames=0;}
 
   ballVY=Math.min(ballVY+cfg.gravity,cfg.maxFall);
   ballY+=ballVY;ballX+=ballVX;ballVX*=0.74;
@@ -393,16 +402,21 @@ function update(){
 
   // Find nearest ring below for aim arrow
   nearestRingY=BALL_SY+120;
-  for(const ring of rings){
+  const sortedRings=[...rings].sort((a,b)=>a.worldY-b.worldY);
+  for(const ring of sortedRings){
     const sy=worldToSY(ring.worldY);
     if(sy>BALL_SY+BALL_R&&sy<BALL_SY+200){nearestRingY=sy;break;}
   }
 
-  for(const ring of rings){
+  // ── Collision: check all rings in fall path ──
+  let hitRing=false;
+  for(const ring of sortedRings){
     const sy=worldToSY(ring.worldY);
-    if(ballVY>0&&sy>=BALL_SY+BALL_R-3&&sy<=BALL_SY+BALL_R+ballVY+6){
+    // wider collision window
+    if(ballVY>0&&sy>=BALL_SY+BALL_R-6&&sy<=BALL_SY+BALL_R+ballVY+10){
       const seg=ring.segs[ballSeg];
       if(!seg||seg.type==='gap'||!seg.alive)continue;
+      hitRing=true;
       if(seg.type==='breakable'){
         seg.alive=false;seg.breakAnim=1;
         burst(ballX,BALL_SY+BALL_R,cfg.brk,14,5);
@@ -412,7 +426,9 @@ function update(){
         if(score>bestScore){bestScore=score;saveBest(bestScore,bestLevel);}
         if(curCombo>1){floatTxt(ballX,BALL_SY-22,curCombo+'x!','#fbbf24');playSound('combo');}
         else{floatTxt(ballX+45,BALL_SY,'+1',cfg.brkGlow);playSound('break');}
-        levelRingsCleared++;updateHUD();ballVY*=0.45;
+        levelRingsCleared++;updateHUD();
+        // bounce — don't stop ball completely
+        ballVY=Math.max(ballVY*0.45, cfg.gravity*2);
         if(levelRingsCleared>=RINGS_PER_LEVEL){
           if(level>=50)showWin();
           else{state='levelclear';setTimeout(showLevelClear,500);}
@@ -429,9 +445,20 @@ function update(){
     }
   }
 
+  // ── Extend rings aage se ──
   extendRings();
-  for(const ring of rings)for(const seg of ring.segs)if(!seg.alive&&seg.breakAnim>0)seg.breakAnim=Math.max(0,seg.breakAnim-.07);
-  if(ballY>nextIdx*RING_SP+300){state='dead';playSound('death');setTimeout(showGO,400);return;}
+
+  // ── Break animation update ──
+  for(const ring of rings)
+    for(const seg of ring.segs)
+      if(!seg.alive&&seg.breakAnim>0)seg.breakAnim=Math.max(0,seg.breakAnim-.07);
+
+  // ── Safety: agar ball bahut aage nikal gayi ──
+  if(ballY>nextIdx*RING_SP+500){
+    state='dead';playSound('death');setTimeout(showGO,400);return;
+  }
+
+  // ── Particles ──
   for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.vy+=.13;p.life-=p.decay;p.r*=.97;}
   particles=particles.filter(p=>p.life>0);
   for(const f of floatTexts){f.y+=f.vy;f.life-=.028;}
@@ -679,3 +706,4 @@ updateHUD();updateDiffBadge();
 </script>
 </body>
 </html>
+
